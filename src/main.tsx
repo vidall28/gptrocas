@@ -1,14 +1,22 @@
 
 import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
 import './index.css';
+import { AuthProvider } from './context/AuthContext';
+import { DataProvider } from './context/DataContext';
+import { SonnerToaster } from './lib/sonner';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) throw new Error('Failed to find the root element');
-
-createRoot(rootElement).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <AuthProvider>
+        <DataProvider>
+          <App />
+          <SonnerToaster />
+        </DataProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

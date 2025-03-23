@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, X, User, Users as UsersIcon, Edit, ShieldCheck, ShieldOff } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { Navigate } from 'react-router-dom';
 
 const Users: React.FC = () => {

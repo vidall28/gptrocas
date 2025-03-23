@@ -50,7 +50,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { Navigate } from 'react-router-dom';

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
@@ -21,7 +20,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { Camera, Package, Trash, Info, Plus, Check } from 'lucide-react';
 
 const RecordExchange: React.FC = () => {
@@ -154,8 +153,7 @@ const RecordExchange: React.FC = () => {
       label,
       type,
       items,
-      status: 'pending',
-      createdAt: new Date().toISOString()
+      status: 'pending'
     });
     
     // Reset form

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
@@ -6,13 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash, Box, Search, X } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 
 const Products: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useData();
   const [search, setSearch] = useState('');
   
-  // New product state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [name, setName] = useState('');
@@ -20,13 +18,11 @@ const Products: React.FC = () => {
   const [capacity, setCapacity] = useState('');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   
-  // Filter products by search
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(search.toLowerCase()) ||
     product.code.toLowerCase().includes(search.toLowerCase())
   );
   
-  // Reset form
   const resetForm = () => {
     setName('');
     setCode('');
@@ -34,7 +30,6 @@ const Products: React.FC = () => {
     setEditingProductId(null);
   };
   
-  // Add new product
   const handleAddProduct = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -49,7 +44,6 @@ const Products: React.FC = () => {
       return;
     }
     
-    // Check if code already exists
     if (products.some(p => p.code === code)) {
       toast.error('Já existe um produto com este código');
       return;
@@ -65,7 +59,6 @@ const Products: React.FC = () => {
     setIsAddDialogOpen(false);
   };
   
-  // Edit product
   const handleEditProduct = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -80,7 +73,6 @@ const Products: React.FC = () => {
       return;
     }
     
-    // Check if code already exists (excluding current product)
     if (products.some(p => p.code === code && p.id !== editingProductId)) {
       toast.error('Já existe um produto com este código');
       return;
@@ -96,14 +88,12 @@ const Products: React.FC = () => {
     setIsEditDialogOpen(false);
   };
   
-  // Delete product
   const handleDeleteProduct = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir este produto?')) {
       deleteProduct(id);
     }
   };
   
-  // Start editing product
   const startEditingProduct = (product: typeof products[0]) => {
     setEditingProductId(product.id);
     setName(product.name);
@@ -114,7 +104,6 @@ const Products: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Produtos</h1>
@@ -179,7 +168,6 @@ const Products: React.FC = () => {
         </Dialog>
       </div>
       
-      {/* Search and Filters */}
       <div className="flex items-center gap-2 max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -200,7 +188,6 @@ const Products: React.FC = () => {
         </div>
       </div>
       
-      {/* Products List */}
       <div className="bg-card rounded-lg border shadow-sm">
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">Lista de Produtos</h2>
@@ -270,7 +257,6 @@ const Products: React.FC = () => {
         )}
       </div>
       
-      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
