@@ -36,10 +36,6 @@ import { Badge } from '@/components/ui/badge';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-// Add dependency for JSZip and file-saver
-<lov-add-dependency>jszip@3.10.1</lov-add-dependency>
-<lov-add-dependency>file-saver@2.0.5</lov-add-dependency>
-
 const History: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { exchanges, products } = useData();
