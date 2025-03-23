@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b">
-        <h1 className="text-xl font-semibold">LogiSwap</h1>
+        <h1 className="text-xl font-semibold">Gestão Q/T Gp</h1>
         {onClose && (
           <button onClick={onClose} className="md:hidden p-1 rounded-md hover:bg-accent">
             <X size={20} />
@@ -183,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
       
       {/* Footer */}
       <div className="p-4 border-t text-xs text-center text-muted-foreground">
-        <p>LogiSwap &copy; {new Date().getFullYear()}</p>
+        <p>Gestão Q/T Gp &copy; {new Date().getFullYear()}</p>
         <p className="mt-1">Sistema de Gestão de Trocas e Quebras</p>
       </div>
     </div>

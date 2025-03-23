@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash, Box, Search, X } from 'lucide-react';
+import { 
+  Plus, 
+  Edit, 
+  Trash, 
+  Box, 
+  Search, 
+  X,
+  Check
+} from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { CommandInput, CommandList, CommandItem, CommandGroup, Command } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const Products: React.FC = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useData();
   const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<typeof products>([]);
+  const [openSearchPopover, setOpenSearchPopover] = useState(false);
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -18,10 +31,34 @@ const Products: React.FC = () => {
   const [capacity, setCapacity] = useState('');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(search.toLowerCase()) ||
-    product.code.toLowerCase().includes(search.toLowerCase())
-  );
+  // Search functionality
+  useEffect(() => {
+    if (search.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+    
+    const lowerSearch = search.toLowerCase();
+    const results = products.filter(product => 
+      product.name.toLowerCase().includes(lowerSearch) ||
+      product.code.toLowerCase().includes(lowerSearch)
+    );
+    
+    setSearchResults(results);
+    setOpenSearchPopover(results.length > 0);
+  }, [search, products]);
+
+  const handleSelectSearchResult = (product: typeof products[0]) => {
+    setSearch(product.name);
+    setOpenSearchPopover(false);
+  };
+  
+  const filteredProducts = search.trim() === '' 
+    ? products 
+    : products.filter(product => 
+        product.name.toLowerCase().includes(search.toLowerCase()) ||
+        product.code.toLowerCase().includes(search.toLowerCase())
+      );
   
   const resetForm = () => {
     setName('');
@@ -102,6 +139,28 @@ const Products: React.FC = () => {
     setIsEditDialogOpen(true);
   };
 
+  const highlightSearchMatch = (text: string) => {
+    if (!search.trim()) return text;
+    
+    const lowerText = text.toLowerCase();
+    const lowerSearch = search.toLowerCase();
+    const index = lowerText.indexOf(lowerSearch);
+    
+    if (index === -1) return text;
+    
+    const before = text.substring(0, index);
+    const match = text.substring(index, index + search.length);
+    const after = text.substring(index + search.length);
+    
+    return (
+      <>
+        {before}
+        <span className="bg-yellow-200 dark:bg-yellow-800">{match}</span>
+        {after}
+      </>
+    );
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -170,21 +229,57 @@ const Products: React.FC = () => {
       
       <div className="flex items-center gap-2 max-w-md">
         <div className="relative w-full">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar produtos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+          <Popover open={openSearchPopover && search.length > 0} onOpenChange={setOpenSearchPopover}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar produtos..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8"
+                />
+                {search && (
+                  <button
+                    onClick={() => {
+                      setSearch('');
+                      setOpenSearchPopover(false);
+                    }}
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[300px]" align="start">
+              <Command>
+                <CommandList>
+                  <CommandGroup heading="Sugestões">
+                    {searchResults.length > 0 ? (
+                      searchResults.map((product) => (
+                        <CommandItem 
+                          key={product.id} 
+                          onSelect={() => handleSelectSearchResult(product)}
+                          className="flex items-start justify-between"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{highlightSearchMatch(product.name)}</span>
+                            <span className="text-xs text-muted-foreground">{product.code} - {product.capacity}ml</span>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <Check className="h-3 w-3" />
+                          </Button>
+                        </CommandItem>
+                      ))
+                    ) : (
+                      <p className="p-2 text-sm text-muted-foreground">Nenhum produto encontrado</p>
+                    )}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
       
@@ -225,9 +320,11 @@ const Products: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.code}</TableCell>
+                  <TableRow key={product.id} className={search && (product.name.toLowerCase().includes(search.toLowerCase()) || 
+                    product.code.toLowerCase().includes(search.toLowerCase())) 
+                    ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
+                    <TableCell className="font-medium">{highlightSearchMatch(product.name)}</TableCell>
+                    <TableCell>{highlightSearchMatch(product.code)}</TableCell>
                     <TableCell>{product.capacity} ml</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
