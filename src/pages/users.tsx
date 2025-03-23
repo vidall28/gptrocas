@@ -24,7 +24,8 @@ import {
   ShieldOff,
   ArrowUpDown,
   UserPlus,
-  Filter
+  Filter,
+  Check
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Navigate } from 'react-router-dom';
