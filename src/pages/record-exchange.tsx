@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,8 @@ const RecordExchange: React.FC = () => {
   // Form state
   const [label, setLabel] = useState('');
   const [type, setType] = useState<'exchange' | 'breakage'>('breakage');
+  const [date, setDate] = useState<Date>(new Date());
+  const [notes, setNotes] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [reason, setReason] = useState('');
@@ -42,11 +44,16 @@ const RecordExchange: React.FC = () => {
   
   // Handle image upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleImageUpload(e.target.files, setPhotos);
-    
-    // Reset file input
-    if (e.target) {
-      e.target.value = '';
+    try {
+      handleImageUpload(e.target.files, setPhotos);
+      
+      // Reset file input
+      if (e.target) {
+        e.target.value = '';
+      }
+    } catch (error) {
+      console.error('Erro ao carregar imagens:', error);
+      toast.error('Falha ao carregar as imagens. Tente novamente.');
     }
   };
   
@@ -57,77 +64,96 @@ const RecordExchange: React.FC = () => {
   
   // Add item to list
   const addItem = () => {
-    if (!selectedProductId) {
-      toast.error('Selecione um produto');
-      return;
+    try {
+      if (!selectedProductId) {
+        toast.error('Selecione um produto');
+        return;
+      }
+      
+      if (isNaN(parseInt(quantity)) || parseInt(quantity) <= 0) {
+        toast.error('Quantidade inválida');
+        return;
+      }
+      
+      if (!reason) {
+        toast.error('Informe o motivo');
+        return;
+      }
+      
+      if (photos.length === 0) {
+        toast.error('Adicione pelo menos uma foto');
+        return;
+      }
+      
+      const newItem = {
+        id: Date.now().toString(),
+        productId: selectedProductId,
+        quantity: parseInt(quantity),
+        reason,
+        photos
+      };
+      
+      setItems([...items, newItem]);
+      resetItemForm();
+      toast.success('Item adicionado à lista');
+    } catch (error) {
+      console.error('Erro ao adicionar item:', error);
+      toast.error('Ocorreu um erro ao adicionar o item');
     }
-    
-    if (isNaN(parseInt(quantity)) || parseInt(quantity) <= 0) {
-      toast.error('Quantidade inválida');
-      return;
-    }
-    
-    if (!reason) {
-      toast.error('Informe o motivo');
-      return;
-    }
-    
-    if (photos.length === 0) {
-      toast.error('Adicione pelo menos uma foto');
-      return;
-    }
-    
-    const newItem = {
-      id: Date.now().toString(),
-      productId: selectedProductId,
-      quantity: parseInt(quantity),
-      reason,
-      photos
-    };
-    
-    setItems([...items, newItem]);
-    resetItemForm();
-    toast.success('Item adicionado à lista');
   };
   
   // Remove item from list
   const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-    toast.success('Item removido da lista');
+    try {
+      setItems(items.filter(item => item.id !== id));
+      toast.success('Item removido da lista');
+    } catch (error) {
+      console.error('Erro ao remover item:', error);
+      toast.error('Ocorreu um erro ao remover o item');
+    }
   };
   
   // Submit form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!label) {
-      toast.error('Informe uma legenda para o registro');
-      return;
+    try {
+      if (!label) {
+        toast.error('Informe uma legenda para o registro');
+        return;
+      }
+      
+      if (items.length === 0) {
+        toast.error('Adicione pelo menos um item');
+        return;
+      }
+      
+      // Create exchange
+      addExchange({
+        userId: user!.id,
+        userName: user!.name,
+        userRegistration: user!.registration,
+        label,
+        type,
+        items,
+        status: 'pending',
+        notes: notes,
+        createdAt: date.toISOString()
+      });
+      
+      // Reset form
+      setLabel('');
+      setType('breakage');
+      setDate(new Date());
+      setNotes('');
+      setItems([]);
+      resetItemForm();
+      
+      toast.success('Registro enviado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao enviar registro:', error);
+      toast.error('Ocorreu um erro ao enviar o registro');
     }
-    
-    if (items.length === 0) {
-      toast.error('Adicione pelo menos um item');
-      return;
-    }
-    
-    // Create exchange
-    addExchange({
-      userId: user!.id,
-      userName: user!.name,
-      userRegistration: user!.registration,
-      label,
-      type,
-      items,
-      status: 'pending'
-    });
-    
-    // Reset form
-    setLabel('');
-    setType('breakage');
-    setItems([]);
-    resetItemForm();
-    
-    toast.success('Registro enviado com sucesso!');
   };
 
   return (
@@ -159,6 +185,10 @@ const RecordExchange: React.FC = () => {
                 setLabel={setLabel}
                 type={type}
                 setType={setType}
+                date={date}
+                setDate={setDate}
+                notes={notes}
+                setNotes={setNotes}
               />
               
               <hr className="my-6" />

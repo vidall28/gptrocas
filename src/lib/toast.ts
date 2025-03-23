@@ -1,11 +1,15 @@
 
 import { toast as sonnerToast } from 'sonner';
 
-// Re-export toast functionality
+interface ToastOptions {
+  duration?: number;
+}
+
 export const toast = {
-  success: (message: string) => sonnerToast.success(message),
-  error: (message: string) => sonnerToast.error(message),
-  info: (message: string) => sonnerToast.message(message),
-  // The warning method doesn't exist in sonner, use the message method instead
-  warning: (message: string) => sonnerToast.message(message)
+  success: (message: string, options?: ToastOptions) => sonnerToast.success(message, options),
+  error: (message: string, options?: ToastOptions) => sonnerToast.error(message, options),
+  info: (message: string, options?: ToastOptions) => sonnerToast.info(message, options),
+  message: (message: string, options?: ToastOptions) => sonnerToast(message, options), // Corrected from warning to message
+  loading: (message: string, options?: ToastOptions) => sonnerToast.loading(message, options),
+  dismiss: (toastId?: string) => sonnerToast.dismiss(toastId),
 };

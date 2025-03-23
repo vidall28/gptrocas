@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { ArrowUpDown, ShieldCheck, ShieldOff, User, X } from 'lucide-react';
+import { ArrowUpDown, ShieldCheck, ShieldOff, User, X, Search } from 'lucide-react';
 
 interface UserData {
   id: string;

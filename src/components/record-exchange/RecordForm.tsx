@@ -9,19 +9,28 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import DatePicker from './DatePicker';
 
 interface RecordFormProps {
   label: string;
   setLabel: (label: string) => void;
   type: 'exchange' | 'breakage';
   setType: (type: 'exchange' | 'breakage') => void;
+  date: Date;
+  setDate: (date: Date) => void;
+  notes: string;
+  setNotes: (notes: string) => void;
 }
 
 const RecordForm: React.FC<RecordFormProps> = ({ 
   label, 
   setLabel, 
   type, 
-  setType 
+  setType,
+  date,
+  setDate,
+  notes,
+  setNotes
 }) => {
   return (
     <form className="space-y-5">
@@ -38,17 +47,12 @@ const RecordForm: React.FC<RecordFormProps> = ({
             placeholder="Registro #1"
           />
         </div>
-        <div className="space-y-2">
-          <label htmlFor="date" className="text-sm font-medium">
-            Data
-          </label>
-          <Input
-            id="date"
-            type="date"
-            defaultValue={new Date().toISOString().split('T')[0]}
-            disabled
-          />
-        </div>
+        <DatePicker
+          date={date}
+          setDate={setDate}
+          allowFutureDates={false}
+          label="Data"
+        />
       </div>
       
       {/* Tipo */}
@@ -77,6 +81,8 @@ const RecordForm: React.FC<RecordFormProps> = ({
         </label>
         <Textarea
           id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
           placeholder="Observações gerais sobre este grupo de itens"
           rows={3}
         />

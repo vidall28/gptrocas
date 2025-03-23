@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Check } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Navigate } from 'react-router-dom';
 
@@ -16,9 +16,25 @@ import DeleteUserDialog from '@/components/users/DeleteUserDialog';
 // Import hooks
 import { useUserManagement } from '@/hooks/useUserManagement';
 
+// Define a UserData interface que corresponde ao que o hook useUserManagement espera
+interface UserData {
+  id: string;
+  name: string;
+  registration: string;
+  role: 'admin' | 'user';
+  status: 'active' | 'inactive';
+}
+
 const Users: React.FC = () => {
   const { isAdmin } = useAuth();
-  const { users, updateUserStatus, updateUserRole } = useData();
+  const { users: rawUsers, updateUserStatus, updateUserRole } = useData();
+  
+  // Convertemos os users brutos para o formato UserData
+  const users: UserData[] = rawUsers.map(user => ({
+    ...user,
+    role: user.role === 'admin' ? 'admin' : 'user',
+    status: user.status === 'active' ? 'active' : 'inactive'
+  }));
   
   // Delete User dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

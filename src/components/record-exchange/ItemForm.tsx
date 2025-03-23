@@ -56,7 +56,13 @@ const ItemForm: React.FC<ItemFormProps> = ({
           type="number"
           min={1}
           value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            // Validar entrada para permitir apenas números positivos
+            if (value === '' || (!isNaN(parseInt(value)) && parseInt(value) > 0)) {
+              setQuantity(value);
+            }
+          }}
         />
       </div>
       
