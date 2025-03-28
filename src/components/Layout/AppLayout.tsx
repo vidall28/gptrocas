@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -93,7 +92,10 @@ export const AppLayout: React.FC = () => {
           
           {/* User Info */}
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Olá, {user?.name || 'Usuário'}</span>
+            <div className="flex flex-col justify-center">
+              <span className="text-sm">{user?.name || 'Usuário'}</span>
+              <span className="text-xs text-muted-foreground">Matrícula: {user?.registration || 'N/A'}</span>
+            </div>
             <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full">
               {isAdmin ? 'Administrador' : 'Usuário'}
             </span>
