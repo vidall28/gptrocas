@@ -163,24 +163,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // Admin hardcoded para teste (temporário)
-      if (email === 'vidalkaique.az@gmail.com' && password === 'senha_segura_admin') {
-        const adminUser: User = {
-          id: 'admin-temp-id',
-          name: 'Administrador',
-          registration: '00123456',
-          email: 'vidalkaique.az@gmail.com',
-          role: 'admin',
-          status: 'active'
-        };
-        
-        setUser(adminUser);
-        toast.success('Login realizado com sucesso!');
-        navigate('/dashboard');
-        setIsLoading(false);
-        return;
-      }
-      
       // Fazer login diretamente com o Supabase Auth usando email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
