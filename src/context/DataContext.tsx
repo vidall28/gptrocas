@@ -105,6 +105,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchExchanges = async () => {
       if (!user) {
         console.log('Não há usuário autenticado, ignorando fetchExchanges');
+        // Limpar as trocas quando não há usuário autenticado para evitar dados antigos
+        setExchanges([]);
+        setIsLoading(false);
         return;
       }
       
@@ -112,6 +115,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('========== INICIANDO BUSCA DE TROCAS/QUEBRAS ==========');
         console.log('Usuário atual:', user);
         setIsLoading(true);
+        
+        // Verificar novamente se o usuário ainda está autenticado
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          console.log('Sessão expirou durante a execução, cancelando fetchExchanges');
+          setExchanges([]);
+          setIsLoading(false);
+          return;
+        }
         
         // Primeiro, buscar todas as trocas/quebras
         console.log('Buscando trocas/quebras do Supabase...');

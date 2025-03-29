@@ -28,11 +28,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkSession = async () => {
       try {
         setIsLoading(true);
+        console.log("Verificando sessão do usuário...");
         
         // Verificar se o usuário já está autenticado no Supabase
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Erro ao obter sessão:", sessionError);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("Sessão atual:", session ? "Autenticado" : "Não autenticado");
         
         if (session) {
+          console.log("Usuário autenticado, buscando dados...", session.user.id);
+          
           // Buscar os dados do usuário da tabela 'users'
           const { data: userData, error: userError } = await supabase
             .from('users')
@@ -42,7 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
           if (userError) {
             console.error('Erro ao buscar dados do usuário:', userError);
-            throw userError;
+            // Não fazemos logout automático aqui para evitar loops em caso de problema na tabela users
+            setIsLoading(false);
+            return;
           }
           
           if (userData) {
@@ -80,14 +93,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               status: userData.status
             };
             
+            console.log("Definindo usuário no estado:", currentUser);
             setUser(currentUser);
+          } else {
+            console.warn("Sessão encontrada, mas dados do usuário não existem na tabela users");
           }
+        } else {
+          console.log("Nenhuma sessão ativa encontrada");
         }
       } catch (error) {
         console.error('Erro ao verificar sessão:', error);
-        // Se houver erro, fazer logout
-        await supabase.auth.signOut();
-        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -97,7 +112,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Configurar listener para mudanças na autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Evento de autenticação:", event, session ? "com sessão" : "sem sessão");
+      
       if (event === 'SIGNED_IN' && session) {
+        console.log("Usuário autenticado, ID:", session.user.id);
+        
         // Buscar os dados do usuário
         const { data: userData, error: userError } = await supabase
           .from('users')
@@ -106,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
           
         if (userError) {
-          console.error('Erro ao buscar dados do usuário:', userError);
+          console.error('Erro ao buscar dados do usuário no evento de autenticação:', userError);
           return;
         }
         
@@ -145,15 +164,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             status: userData.status
           };
           
+          console.log("Atualizando usuário no estado a partir do evento:", currentUser);
           setUser(currentUser);
         }
       } else if (event === 'SIGNED_OUT') {
+        console.log("Evento de logout detectado");
         setUser(null);
       }
     });
     
     // Limpar subscription quando o componente for desmontado
     return () => {
+      console.log("Limpando subscription de autenticação");
       subscription.unsubscribe();
     };
   }, []);
@@ -163,38 +185,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // Admin hardcoded para teste (temporário)
-      if (email === 'vidalkaique.az@gmail.com' && password === 'senha_segura_admin') {
-        const adminUser: User = {
-          id: 'admin-temp-id',
-          name: 'Administrador',
-          registration: '00123456',
-          email: 'vidalkaique.az@gmail.com',
-          role: 'admin',
-          status: 'active'
-        };
-        
-        setUser(adminUser);
-        toast.success('Login realizado com sucesso!');
-        navigate('/dashboard');
-        setIsLoading(false);
-        return;
-      }
+      console.log(`Iniciando processo de login para: ${email}`);
+      
+      // Limpar qualquer resquício de sessão anterior
+      console.log('Limpando dados residuais de sessão anterior');
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
+      // Configuração para persistência da sessão
+      const persistenceOptions = {
+        persistSession: true
+      };
       
       // Fazer login diretamente com o Supabase Auth usando email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
-        password: password
+        password: password,
+        options: persistenceOptions
       });
+      
+      console.log('Resposta da autenticação:', 
+                 authData ? 'Autenticação bem-sucedida' : 'Sem dados de autenticação', 
+                 authError ? `Erro: ${authError.message}` : 'Sem erros');
       
       if (authError || !authData.user) {
         console.error('Erro ao fazer login:', authError);
         toast.error('Credenciais inválidas');
+        setIsLoading(false);
         return;
       }
       
       // Log para debugging dos metadados do usuário
       console.log('Metadados do usuário Auth:', authData.user.user_metadata);
+      console.log('ID do usuário autenticado:', authData.user.id);
       
       // Buscar os dados completos do usuário na tabela users
       const { data: userData, error: userError } = await supabase
@@ -203,6 +226,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', authData.user.id)
         .eq('status', 'active')
         .single();
+        
+      console.log('Resposta da busca do usuário:', 
+                 userData ? 'Dados encontrados' : 'Usuário não encontrado', 
+                 userError ? `Erro: ${userError.message}` : 'Sem erros');
         
       if (userError) {
         console.error('Erro ao buscar dados do usuário:', userError);
@@ -228,10 +255,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           );
           
+          console.log('Resultado da correção de dados:', 
+                     fixResult ? 'Sucesso' : 'Falha', 
+                     fixError ? `Erro: ${fixError.message}` : 'Sem erros');
+          
           if (fixError) {
             console.error('Erro ao criar/corrigir dados do usuário:', fixError);
             toast.error('Erro ao sincronizar dados do usuário. Entre em contato com o suporte.');
-            await supabase.auth.signOut();
+            
+            // Não fazemos logout automático aqui para evitar problemas
+            setIsLoading(false);
             return;
           }
           
@@ -247,7 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (fixedUserError || !fixedUserData) {
             console.error('Erro ao buscar dados do usuário após correção:', fixedUserError);
             toast.error('Usuário não encontrado ou inativo');
-            await supabase.auth.signOut();
+            setIsLoading(false);
             return;
           }
           
@@ -257,26 +290,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name: fixedUserData.name,
             registration: fixedUserData.registration,
             email: fixedUserData.email,
-            role: 'user', // Usuário padrão
-            status: 'active'
+            role: fixedUserData.role || 'user', // Usuário padrão
+            status: fixedUserData.status || 'active'
           };
           
+          console.log('Usuário definido após correção:', currentUser);
           setUser(currentUser);
           toast.success('Login realizado com sucesso!');
-          navigate('/dashboard');
+          
+          // Aguardar um momento para garantir que o estado foi atualizado
+          setTimeout(() => {
+            navigate('/dashboard');
+            setIsLoading(false);
+          }, 500);
+          
           return;
         } catch (fixError) {
           console.error('Erro ao tentar corrigir dados do usuário:', fixError);
           toast.error('Erro ao processar login. Entre em contato com o suporte.');
-          await supabase.auth.signOut();
+          setIsLoading(false);
           return;
         }
       }
       
       if (!userData) {
         toast.error('Usuário não encontrado ou inativo');
-        // Logout do supabase se não encontrou o usuário na tabela users
-        await supabase.auth.signOut();
+        // Não fazemos logout automático aqui
+        setIsLoading(false);
         return;
       }
       
@@ -327,12 +367,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: userData.status
       };
       
+      console.log('Definindo usuário após login bem-sucedido:', currentUser);
       setUser(currentUser);
       toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
+      
+      // Verificar a sessão após o login para garantir persistência
+      const { data: sessionCheck } = await supabase.auth.getSession();
+      console.log("Verificação de sessão após login:", 
+                 sessionCheck?.session ? "Sessão ativa" : "Sessão não encontrada");
+      
+      // Aguardar um momento para garantir que o estado foi atualizado
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 500);
+      
     } catch (error) {
       console.error('Erro ao fazer login:', error);
-      toast.error('Erro ao realizar login');
+      toast.error('Erro ao realizar login: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
     } finally {
       setIsLoading(false);
     }
@@ -624,45 +675,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Iniciando processo de logout...");
       setIsLoading(true); // Ativar indicador de carregamento
       
+      // Preparar-se para o logout
+      const currentPath = window.location.pathname;
+      console.log("Caminho atual antes do logout:", currentPath);
+      
+      // Limpar estado de usuário primeiro para uma resposta mais rápida na UI
+      setUser(null);
+      
+      // Limpar todo o storage associado ao Supabase antes do logout
+      console.log("Limpando dados de armazenamento local");
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+      
       // Executar o logout no Supabase
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // Alterado para 'global' para garantir um logout completo
+      });
       
       if (error) {
         console.error('Erro ao fazer logout no Supabase:', error);
         
-        // Mesmo com erro, limpar o estado do usuário para forçar o logout
-        setUser(null);
-        sessionStorage.removeItem('quebrastrocasgp:user');
-        localStorage.removeItem('supabase.auth.token');
+        // Limpar todos os dados de sessão localmente
+        try {
+          console.log("Limpando dados de sessão manualmente");
+          sessionStorage.clear();
+          localStorage.clear(); // Limpar todo localStorage para garantir
+          document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+          });
+        } catch (clearError) {
+          console.error("Erro ao limpar dados locais:", clearError);
+        }
         
         // Avisar o usuário, mas permitir que o logout prossiga
         toast.error('Houve um problema ao encerrar a sessão, mas você foi desconectado');
       } else {
         // Logout bem-sucedido
-        setUser(null);
         console.log("Logout realizado com sucesso no Supabase");
         toast.info('Sessão encerrada com sucesso');
       }
       
       // Forçar navegação independente do resultado
       window.setTimeout(() => {
-        navigate('/login', { replace: true });
-      }, 100);
+        window.location.href = '/login'; // Usar window.location para garantir uma recarga completa
+      }, 500);
       
     } catch (error) {
       console.error('Erro não esperado durante logout:', error);
       
       // Tratamento de contingência: forçar o logout mesmo após erro
       setUser(null);
-      sessionStorage.removeItem('quebrastrocasgp:user');
-      localStorage.removeItem('supabase.auth.token');
+      
+      try {
+        // Limpar manualmente
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Tentar novamente com opções simplificadas
+        await supabase.auth.signOut();
+      } catch (secondError) {
+        console.error("Erro na segunda tentativa de logout:", secondError);
+      }
       
       toast.error('Ocorreu um erro ao encerrar a sessão, mas você foi desconectado');
       
-      // Forçar navegação para login com timeout para garantir que a UI seja atualizada
+      // Forçar navegação para login com reload completo
       window.setTimeout(() => {
-        navigate('/login', { replace: true }); 
-      }, 100);
+        window.location.href = '/login';
+      }, 500);
       
     } finally {
       setIsLoading(false);

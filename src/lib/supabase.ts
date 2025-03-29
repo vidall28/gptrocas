@@ -16,7 +16,36 @@ const supabaseOptions = {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storageKey: 'sb-auth-token', // Chave de armazenamento personalizada
+    storage: {
+      getItem: (key) => {
+        try {
+          const item = localStorage.getItem(key);
+          console.log(`Recuperando token [${key}]:`, item ? 'Encontrado' : 'Não encontrado');
+          return item;
+        } catch (e) {
+          console.error('Erro ao recuperar token:', e);
+          return null;
+        }
+      },
+      setItem: (key, value) => {
+        try {
+          console.log(`Salvando token [${key}]`);
+          localStorage.setItem(key, value);
+        } catch (e) {
+          console.error('Erro ao salvar token:', e);
+        }
+      },
+      removeItem: (key) => {
+        try {
+          console.log(`Removendo token [${key}]`);
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.error('Erro ao remover token:', e);
+        }
+      }
+    }
   },
   global: {
     // Aumentar o timeout para 30 segundos (o padrão é 6s)
