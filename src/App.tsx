@@ -2,7 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+<<<<<<< HEAD
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+=======
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+>>>>>>> 5fa848c62f66f74f780b5eeb33400014b2b4cc6a
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { DataProvider } from "@/context/DataContext";
 import { AppLayout } from "@/components/Layout/AppLayout";
@@ -41,21 +45,37 @@ const queryClient = new QueryClient({
 });
 
 // Componente de carregamento
+<<<<<<< HEAD
 const LoadingScreen = ({ message }: { message: string }) => (
   <div className="flex items-center justify-center min-h-screen bg-background">
     <div className="flex flex-col items-center space-y-4">
       <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
       <h2 className="text-2xl font-medium text-foreground">{message}</h2>
+=======
+const LoadingScreen = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex flex-col items-center space-y-4">
+      <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <h2 className="text-2xl font-medium text-foreground">Carregando...</h2>
+>>>>>>> 5fa848c62f66f74f780b5eeb33400014b2b4cc6a
     </div>
   </div>
 );
 
 // Componente para rota protegida
+<<<<<<< HEAD
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const auth = useAuth();
   
   if (auth.isLoading) {
     return <LoadingScreen message="Verificando permissões..." />;
+=======
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const auth = useAuth();
+  
+  if (auth.isLoading) {
+    return <LoadingScreen />;
+>>>>>>> 5fa848c62f66f74f780b5eeb33400014b2b4cc6a
   }
   
   if (!auth.isAuthenticated) {
@@ -66,6 +86,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 };
 
 // Componente para rotas administrativas
+<<<<<<< HEAD
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
   const location = useLocation();
@@ -83,6 +104,23 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
+=======
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const auth = useAuth();
+  
+  if (auth.isLoading) {
+    return <LoadingScreen />;
+  }
+  
+  if (!auth.isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!auth.isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+>>>>>>> 5fa848c62f66f74f780b5eeb33400014b2b4cc6a
   return <>{children}</>;
 };
 
@@ -99,9 +137,12 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
+<<<<<<< HEAD
               {/* Rota de diagnóstico - acessível mesmo sem login */}
               <Route path="/diagnostico" element={<Diagnostico />} />
               
+=======
+>>>>>>> 5fa848c62f66f74f780b5eeb33400014b2b4cc6a
               {/* Redirect root to login or dashboard based on auth */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               
