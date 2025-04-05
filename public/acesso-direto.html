@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Direto - LogiSwap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #4a36ec;
+            margin-top: 0;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .button:hover {
+            background-color: #e64a19;
+        }
+        
+        .button.primary {
+            background-color: #4a36ec;
+        }
+        
+        .button.primary:hover {
+            background-color: #3929b4;
+        }
+        
+        .button.danger {
+            background-color: #f44336;
+        }
+        
+        .button.danger:hover {
+            background-color: #d32f2f;
+        }
+        
+        .log {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LogiSwap</h1>
+        <p>Acesso Direto ao Dashboard</p>
+        
+        <p><strong>ATENÇÃO:</strong> Este método ignora a autenticação normal e tenta acessar diretamente o dashboard usando uma flag especial.</p>
+        
+        <button id="accessButton" class="button danger">ACESSAR DASHBOARD AGORA</button>
+        <button id="clearButton" class="button">LIMPAR TODOS OS DADOS DE SESSÃO</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+    
+    <script>
+        const accessButton = document.getElementById('accessButton');
+        const clearButton = document.getElementById('clearButton');
+        const logContainer = document.getElementById('log');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `[${timestamp}] ${message}<br>`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function clearLocalStorage() {
+            log('Limpando todos os dados de sessão...');
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Limpar cookies
+            document.cookie.split(";").forEach(function(c) {
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            
+            log('Todos os dados limpos com sucesso!');
+        }
+        
+        function accessDashboard() {
+            log('Preparando acesso direto ao dashboard...');
+            
+            // Limpar dados existentes
+            clearLocalStorage();
+            
+            // Configurar flags de acesso
+            localStorage.setItem('force_access', 'true');
+            localStorage.setItem('dashboard_redirect', 'true');
+            localStorage.setItem('direct_access_timestamp', Date.now().toString());
+            
+            log('Flags de acesso configuradas');
+            log('Redirecionando para o dashboard em 2 segundos...');
+            
+            // Timeout para dar tempo de ver os logs
+            setTimeout(function() {
+                window.location.href = '/dashboard';
+            }, 2000);
+        }
+        
+        // Configurar eventos
+        accessButton.addEventListener('click', accessDashboard);
+        clearButton.addEventListener('click', clearLocalStorage);
+        
+        // Mensagem inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Página carregada. Clique no botão vermelho para acessar o dashboard diretamente.');
+        });
+    </script>
+</body>
+</html> 

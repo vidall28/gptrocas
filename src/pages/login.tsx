@@ -139,6 +139,12 @@ export default function Login() {
             >
               USAR LOGIN SIMPLIFICADO (RECOMENDADO)
             </a>
+            <a 
+              href="/acesso-direto.html" 
+              className="bg-red-500 hover:bg-red-600 text-white border border-red-600 px-4 py-3 rounded text-center text-sm font-bold mt-4 block animate-pulse"
+            >
+              ⚠️ ACESSO DIRETO DE EMERGÊNCIA ⚠️
+            </a>
           </div>
         </div>
         
