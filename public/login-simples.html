@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Simples - LogiSwap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        h1 {
+            color: #4a36ec;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4a36ec;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #3929b4;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .force-button {
+            margin-top: 30px;
+            background-color: #ff5722;
+        }
+        
+        .force-button:hover {
+            background-color: #e64a19;
+        }
+        
+        .link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .link a {
+            color: #4a36ec;
+            text-decoration: none;
+        }
+        
+        .link a:hover {
+            text-decoration: underline;
+        }
+        
+        .debug {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #888;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LogiSwap</h1>
+        <p class="subtitle">Login Simplificado</p>
+        
+        <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="seu.email@exemplo.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" placeholder="Sua senha" required>
+            </div>
+            
+            <button type="submit" id="loginButton">Entrar</button>
+        </form>
+        
+        <button id="forceButton" class="force-button">FORÇAR ACESSO AO DASHBOARD</button>
+        
+        <div class="link">
+            <a href="/login">Voltar para o login normal</a>
+        </div>
+        
+        <pre id="debug" class="debug"></pre>
+    </div>
+    
+    <script>
+        // Elementos do DOM
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        const forceButton = document.getElementById('forceButton');
+        const errorDiv = document.getElementById('error');
+        const successDiv = document.getElementById('success');
+        const debugDiv = document.getElementById('debug');
+        
+        // Supabase config
+        const SUPABASE_URL = 'https://dngnpijxtxcocaszhnmz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuZ25waWp4dHhjb2Nhc3pobm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDc4NTU5MzYsImV4cCI6MjAyMzQzMTkzNn0.4y-UyBPtYRnKMn9C6w8f0g-crGK7bhw0XkvWYd-kq04';
+        
+        // Funções utilitárias
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+        }
+        
+        function log(message, data) {
+            const timestamp = new Date().toTimeString().substring(0, 8);
+            const logMessage = data 
+                ? `[${timestamp}] ${message}\n${JSON.stringify(data, null, 2)}\n\n` 
+                : `[${timestamp}] ${message}\n\n`;
+            
+            debugDiv.textContent += logMessage;
+            console.log(`[${timestamp}]`, message, data || '');
+        }
+        
+        // Função de login
+        async function login(email, password) {
+            try {
+                log('Iniciando processo de login');
+                
+                // Limpar armazenamento local
+                localStorage.clear();
+                sessionStorage.clear();
+                log('Armazenamento local limpo');
+                
+                // Fazer a requisição de login
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                log(`Resposta do servidor: ${response.status} ${response.statusText}`);
+                
+                const data = await response.json();
+                log('Dados da resposta', data);
+                
+                if (!response.ok) {
+                    throw new Error(data.error_description || data.error || 'Falha na autenticação');
+                }
+                
+                // Salvar o token
+                const session = {
+                    access_token: data.access_token,
+                    refresh_token: data.refresh_token,
+                    expires_at: Math.floor(Date.now() / 1000) + data.expires_in
+                };
+                
+                localStorage.setItem('sb-auth-token', JSON.stringify(session));
+                log('Token salvo no localStorage');
+                
+                // Definir flag de acesso forçado
+                localStorage.setItem('force_access', 'true');
+                log('Flag de acesso forçado definido');
+                
+                showSuccess('Login bem-sucedido! Redirecionando...');
+                
+                // Redirecionar para o dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+                
+                return true;
+            } catch (error) {
+                log('Erro no login', error.message);
+                showError(`Erro: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Manipuladores de eventos
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            
+            loginButton.disabled = true;
+            loginButton.textContent = 'Entrando...';
+            
+            await login(email, password);
+            
+            loginButton.disabled = false;
+            loginButton.textContent = 'Entrar';
+        });
+        
+        forceButton.addEventListener('click', () => {
+            log('Forçando acesso ao dashboard');
+            
+            // Limpar armazenamento local
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Definir flag de acesso forçado
+            localStorage.setItem('force_access', 'true');
+            
+            showSuccess('Redirecionando para o dashboard em modo de acesso forçado...');
+            
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1000);
+        });
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Página carregada');
+        });
+    </script>
+</body>
+</html> 

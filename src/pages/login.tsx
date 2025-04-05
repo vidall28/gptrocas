@@ -133,6 +133,12 @@ export default function Login() {
             >
               USAR PÁGINA DE LOGIN ALTERNATIVA
             </a>
+            <a 
+              href="/login-simples.html" 
+              className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 px-4 py-2 rounded text-center text-sm font-bold mt-2"
+            >
+              USAR LOGIN SIMPLIFICADO (RECOMENDADO)
+            </a>
           </div>
         </div>
         
