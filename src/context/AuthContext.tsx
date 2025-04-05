@@ -305,13 +305,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                      sessionCheck?.session ? "Sessão ativa" : "Sessão não encontrada");
           
           // Tentativa simples de redirecionamento após login
-          console.log('Redirecionando para o dashboard...');
+          console.log('Redirecionando para a página de redirecionamento...');
           setTimeout(() => {
             try {
-              // Redirecionamento simples com JavaScript tradicional
-              window.location.href = '/dashboard';
+              // Usar a página de redirecionamento intermediária
+              window.location.href = '/redirect.html';
             } catch (navError) {
               console.error('Erro durante o redirecionamento:', navError);
+              // Fallback para tentativa direta
+              window.location.href = '/dashboard';
             }
           }, 1000);
           
@@ -388,13 +390,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                  sessionCheck?.session ? "Sessão ativa" : "Sessão não encontrada");
       
       // Tentativa simples de redirecionamento após login
-      console.log('Redirecionando para o dashboard...');
+      console.log('Redirecionando para a página de redirecionamento...');
       setTimeout(() => {
         try {
-          // Redirecionamento simples com JavaScript tradicional
-          window.location.href = '/dashboard';
+          // Usar a página de redirecionamento intermediária
+          window.location.href = '/redirect.html';
         } catch (navError) {
           console.error('Erro durante o redirecionamento:', navError);
+          // Fallback para tentativa direta
+          window.location.href = '/dashboard';
         }
       }, 1000);
       

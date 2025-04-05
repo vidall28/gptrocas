@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecionando...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .redirect-container {
+            text-align: center;
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .redirect-text {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+        .manual-button {
+            margin-top: 30px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .manual-button:hover {
+            background-color: #2980b9;
+        }
+        .counter {
+            font-weight: bold;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-container">
+        <h2>Login bem-sucedido!</h2>
+        <div class="spinner"></div>
+        <p class="redirect-text">Redirecionando para o Dashboard em <span id="counter" class="counter">5</span> segundos...</p>
+        <p class="redirect-text">Se o redirecionamento automático não funcionar, clique no botão abaixo:</p>
+        <button id="manual-redirect" class="manual-button">Ir para o Dashboard agora</button>
+    </div>
+
+    <script>
+        // Função para redirecionar para o dashboard
+        function redirectToDashboard() {
+            try {
+                // Definir flag de redirecionamento bem-sucedido
+                localStorage.setItem('dashboard_redirect', 'true');
+                
+                // Redirecionar para o dashboard
+                window.location.href = '/dashboard';
+            } catch (error) {
+                console.error('Erro ao redirecionar:', error);
+                // Se ocorrer erro, tentar outra abordagem
+                window.location.replace('/dashboard');
+            }
+        }
+
+        // Configurar contador regressivo
+        let count = 5;
+        const counterElement = document.getElementById('counter');
+        
+        const interval = setInterval(() => {
+            count--;
+            counterElement.textContent = count;
+            
+            if (count <= 0) {
+                clearInterval(interval);
+                redirectToDashboard();
+            }
+        }, 1000);
+
+        // Configurar botão de redirecionamento manual
+        document.getElementById('manual-redirect').addEventListener('click', () => {
+            clearInterval(interval);
+            redirectToDashboard();
+        });
+
+        // Tentar redirecionar após carregar a página (tempo extra para garantir)
+        window.addEventListener('load', () => {
+            setTimeout(redirectToDashboard, 5000);
+        });
+    </script>
+</body>
+</html> 

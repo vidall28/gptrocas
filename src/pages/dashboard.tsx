@@ -11,17 +11,25 @@ const Dashboard: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { exchanges, products } = useData();
   
-  // Verificar se o usuário chegou após um login bem-sucedido
+  // Verificar se o usuário chegou após um redirecionamento bem-sucedido
   useEffect(() => {
-    const loginSuccess = localStorage.getItem('login_success');
-    if (loginSuccess === 'true') {
+    // Verificar flag de redirecionamento
+    const redirectFlag = localStorage.getItem('dashboard_redirect');
+    if (redirectFlag === 'true') {
       // Limpar o flag
-      localStorage.removeItem('login_success');
+      localStorage.removeItem('dashboard_redirect');
       
-      // Forçar recarga de dados
-      window.location.reload();
+      // Verificar se há produtos carregados
+      if (products.length === 0) {
+        console.log("Dashboard acessado após redirecionamento, mas sem produtos carregados. Recarregando página...");
+        // Forçar uma recarga da página
+        window.location.reload();
+      } else {
+        console.log("Dashboard acessado após redirecionamento bem-sucedido com produtos carregados");
+        toast.success("Login realizado com sucesso!");
+      }
     }
-  }, []);
+  }, [products]);
   
   // Count statistics
   const pendingCount = exchanges.filter(e => e.status === 'pending').length;
