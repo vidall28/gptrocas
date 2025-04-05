@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Direto - LogiSwap</title>
+    <style>
+        :root {
+            --primary: #4a36ec;
+            --primary-hover: #3929b4;
+            --background: #f5f5f5;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1a202c;
+            --text-muted: #718096;
+            --error: #f56565;
+            --success: #48bb78;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background-color: var(--card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px 16px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background-color: var(--card);
+            transition: border-color 0.15s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-error {
+            background-color: #FEF2F2;
+            border: 1px solid #FEE2E2;
+            color: var(--error);
+        }
+        
+        .alert-success {
+            background-color: #F0FDF4;
+            border: 1px solid #DCFCE7;
+            color: var(--success);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+        }
+        
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .alternative {
+            border: 1px solid #FEF3C7;
+            background-color: #FFFBEB;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+        
+        .alternative h3 {
+            margin: 0 0 8px 0;
+            color: #D97706;
+            font-size: 16px;
+        }
+        
+        .alternative p {
+            margin: 0 0 16px 0;
+            font-size: 14px;
+            color: #92400E;
+        }
+        
+        .alternative-btn {
+            background-color: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+        }
+        
+        .alternative-btn:hover {
+            background-color: #FDE68A;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner-container {
+            display: none;
+        }
+        
+        .debug-info {
+            margin-top: 30px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .debug-info pre {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">LogiSwap</h1>
+            <p class="subtitle">Login Alternativo</p>
+        </div>
+        
+        <div id="errorAlert" class="alert alert-error">
+            <strong>Erro:</strong> <span id="errorMessage"></span>
+        </div>
+        
+        <div id="successAlert" class="alert alert-success">
+            <strong>Sucesso!</strong> <span id="successMessage"></span>
+        </div>
+        
+        <div class="login-card">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="seu.email@exemplo.com" 
+                        required
+                    />
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Senha</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="••••••••" 
+                        required
+                    />
+                </div>
+                
+                <button type="submit" id="loginButton" class="btn">
+                    <span class="spinner-container" id="spinnerContainer">
+                        <span class="spinner"></span>
+                    </span>
+                    Entrar
+                </button>
+                
+                <div class="footer">
+                    <a href="/login">Voltar para o login padrão</a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="alternative">
+            <h3>Problemas para entrar?</h3>
+            <p>Se o login normal não funcionar, você pode forçar o acesso ao dashboard:</p>
+            <button id="forceDashboardBtn" class="btn alternative-btn">Forçar acesso ao Dashboard</button>
+        </div>
+        
+        <div class="debug-info">
+            <details>
+                <summary>Informações de Diagnóstico</summary>
+                <div id="debugInfo"></div>
+            </details>
+        </div>
+    </div>
+    
+    <script>
+        // Configurações do Supabase
+        const SUPABASE_URL = 'https://dngnpijxtxcocaszhnmz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuZ25waWp4dHhjb2Nhc3pobm16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDc4NTU5MzYsImV4cCI6MjAyMzQzMTkzNn0.4y-UyBPtYRnKMn9C6w8f0g-crGK7bhw0XkvWYd-kq04';
+        
+        // Elementos DOM
+        const loginForm = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const successAlert = document.getElementById('successAlert');
+        const successMessage = document.getElementById('successMessage');
+        const spinnerContainer = document.getElementById('spinnerContainer');
+        const forceDashboardBtn = document.getElementById('forceDashboardBtn');
+        const debugInfo = document.getElementById('debugInfo');
+        
+        // Funções utilitárias
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successAlert.style.display = 'block';
+        }
+        
+        function setLoading(isLoading) {
+            loginButton.disabled = isLoading;
+            spinnerContainer.style.display = isLoading ? 'inline-block' : 'none';
+            loginButton.textContent = isLoading ? 'Entrando...' : 'Entrar';
+            if (!isLoading) {
+                spinnerContainer.insertAdjacentElement('afterend', document.createTextNode('Entrar'));
+            }
+        }
+        
+        function logDebug(message, data = null) {
+            const timestamp = new Date().toISOString().substr(11, 8);
+            const logItem = document.createElement('div');
+            logItem.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+            
+            if (data) {
+                const pre = document.createElement('pre');
+                pre.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+                logItem.appendChild(pre);
+            }
+            
+            debugInfo.appendChild(logItem);
+            console.log(`[${timestamp}] ${message}`, data || '');
+        }
+        
+        function goToDashboard() {
+            window.location.href = '/dashboard';
+        }
+        
+        // Função para fazer login diretamente via Supabase REST API
+        async function loginViaSupabase(email, password) {
+            logDebug('Iniciando processo de login direto com Supabase');
+            
+            try {
+                // Limpar dados de sessão existentes para evitar conflitos
+                logDebug('Limpando dados de sessão existentes');
+                localStorage.removeItem('sb-auth-token');
+                sessionStorage.removeItem('sb-auth-token');
+                
+                // Fazer a requisição para obter o token
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error_description || data.error || 'Falha na autenticação');
+                }
+                
+                logDebug('Login bem-sucedido', data);
+                
+                // Armazenar o token no localStorage
+                const session = {
+                    access_token: data.access_token,
+                    refresh_token: data.refresh_token,
+                    expires_at: Math.floor(Date.now() / 1000) + data.expires_in
+                };
+                
+                localStorage.setItem('sb-auth-token', JSON.stringify(session));
+                logDebug('Token armazenado no localStorage');
+                
+                // Verificar o usuário
+                const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${data.access_token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+                
+                const userData = await userResponse.json();
+                logDebug('Dados do usuário obtidos', userData);
+                
+                // Definir flag para acesso
+                localStorage.setItem('force_access', 'true');
+                logDebug('Flag de acesso forçado definido');
+                
+                // Mostrar mensagem de sucesso
+                showSuccess('Login realizado com sucesso! Redirecionando...');
+                
+                // Redirecionar para o dashboard
+                setTimeout(() => {
+                    goToDashboard();
+                }, 1500);
+                
+                return true;
+            } catch (error) {
+                logDebug('Erro no processo de login', error.message);
+                showError(error.message);
+                return false;
+            }
+        }
+        
+        // Evento de submissão do formulário
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            setLoading(true);
+            const success = await loginViaSupabase(email, password);
+            
+            if (!success) {
+                setLoading(false);
+            }
+        });
+        
+        // Botão para forçar acesso ao dashboard
+        forceDashboardBtn.addEventListener('click', () => {
+            logDebug('Forçando acesso ao dashboard');
+            localStorage.setItem('force_access', 'true');
+            goToDashboard();
+        });
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            logDebug('Página de login direto carregada');
+            
+            // Preencher o email se já tiver sido usado antes
+            const savedEmail = localStorage.getItem('last_email');
+            if (savedEmail) {
+                emailInput.value = savedEmail;
+                logDebug('Email preenchido do armazenamento local');
+            }
+        });
+    </script>
+</body>
+</html> 

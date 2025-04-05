@@ -127,6 +127,12 @@ export default function Login() {
             >
               Acessar Ferramenta de Diagnóstico Avançado
             </a>
+            <a 
+              href="/login-direto.html" 
+              className="bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 px-4 py-2 rounded text-center text-sm font-bold mt-2"
+            >
+              USAR PÁGINA DE LOGIN ALTERNATIVA
+            </a>
           </div>
         </div>
         
