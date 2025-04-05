@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from '@/lib/toast';
 import { supabase, User, Tables, mappers } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
+import { utils, write } from 'xlsx';
+import { saveAs } from 'file-saver';
 
 // Define interfaces
 export interface Product {
@@ -59,6 +61,9 @@ interface DataContextType {
   
   // Loading state
   isLoading: boolean;
+  
+  // New function
+  exportarParaPlanilhaControle: (exchangeId: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -1188,6 +1193,109 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Função para exportar para o formato da planilha de controle de trocas e quebras
+  const exportarParaPlanilhaControle = async (exchangeId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Buscar a troca/quebra específica
+      const exchange = exchanges.find(e => e.id === exchangeId);
+      if (!exchange) {
+        throw new Error('Registro não encontrado');
+      }
+      
+      // Formatar a data atual no formato DD/MM/YYYY
+      const hoje = new Date();
+      const dataFormatada = hoje.toLocaleDateString('pt-BR');
+      
+      // Criar dados para a planilha
+      const rows = [];
+      
+      // Adicionar cabeçalho
+      const titulo = `CONTROLE DE TROCAS PARA QUEBRAS DO DIA ${dataFormatada.replace(/\//g, '/')}`;
+      
+      // Preparar dados de itens
+      let und = 54; // Iniciar com 54 como na planilha exemplo
+      
+      for (const item of exchange.items) {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) continue;
+        
+        // Calcular o total (quantidade * valor unitário)
+        // Estamos assumindo um valor fixo de R$ 2,00 como exemplo
+        const valorUnitario = 2.00;
+        const total = (item.quantity * valorUnitario).toFixed(2);
+        
+        rows.push({
+          UND: und.toString(),
+          CÓDIGO: product.code,
+          DESCRIÇÃO: product.name,
+          QUANT: item.quantity,
+          MED: 'UN',
+          $: 'R$',
+          'VALOR UNITÁRIO': valorUnitario.toFixed(2),
+          TOTAL: `R$ ${total}`,
+          'MOTIVO QUEBRA/TROCA': exchange.type === 'breakage' ? 'ROPA MR QUEBRA' : 'ROPA MR MODO FUNO',
+          IDENTIFICAÇÃO: '3233009',
+          DATA: hoje.toLocaleDateString('pt-BR') + ' 00:00'
+        });
+        
+        und++;
+      }
+      
+      // Criar workbook
+      const wb = utils.book_new();
+      
+      // Criar worksheet
+      const ws = utils.json_to_sheet(rows);
+      
+      // Adicionar o título
+      utils.sheet_add_aoa(ws, [[titulo]], { origin: 'A1' });
+      
+      // Mesclar células para o título
+      if(!ws['!merges']) ws['!merges'] = [];
+      ws['!merges'].push({s: {r: 0, c: 0}, e: {r: 0, c: 10}});
+      
+      // Definir a largura das colunas
+      const wscols = [
+        { wch: 5 },  // UND
+        { wch: 12 }, // CÓDIGO
+        { wch: 40 }, // DESCRIÇÃO
+        { wch: 10 }, // QUANT
+        { wch: 5 },  // MED
+        { wch: 5 },  // $
+        { wch: 10 }, // VALOR UNITÁRIO
+        { wch: 10 }, // TOTAL
+        { wch: 25 }, // MOTIVO QUEBRA/TROCA
+        { wch: 15 }, // IDENTIFICAÇÃO
+        { wch: 20 }, // DATA
+      ];
+      
+      ws['!cols'] = wscols;
+      
+      utils.book_append_sheet(wb, ws, "Controle");
+      
+      // Gerar arquivo
+      const wbout = write(wb, { 
+        bookType: 'xlsx', 
+        type: 'array',
+        bookSST: false,
+        cellStyles: true
+      });
+      
+      // Converter para blob e baixar
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      saveAs(blob, `controle_${exchange.type === 'breakage' ? 'quebras' : 'trocas'}_${hoje.toISOString().split('T')[0]}.xlsx`);
+      
+      toast.success('Planilha de controle exportada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar para planilha de controle:', error);
+      toast.error('Erro ao exportar planilha. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -1210,7 +1318,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUserRole,
         deleteUser,
         
-        isLoading
+        isLoading,
+        exportarParaPlanilhaControle,
       }}
     >
       {children}

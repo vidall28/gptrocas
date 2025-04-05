@@ -45,7 +45,8 @@ import {
   Download,
   Clock,
   ShieldAlert,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -59,7 +60,7 @@ import { Navigate } from 'react-router-dom';
 
 const Approvals: React.FC = () => {
   const { user, isAdmin } = useAuth();
-  const { exchanges, products, updateExchange } = useData();
+  const { exchanges, products, updateExchange, exportarParaPlanilhaControle } = useData();
   
   // If not admin, redirect to dashboard
   if (!isAdmin) {
@@ -530,7 +531,7 @@ const Approvals: React.FC = () => {
                 </div>
                 
                 {/* Button to export to Excel at top of dialog */}
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -538,6 +539,15 @@ const Approvals: React.FC = () => {
                     onClick={() => exportToExcel(selectedExchange, products)}
                   >
                     <FileSpreadsheet size={16} /> Exportar para Planilha
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => exportarParaPlanilhaControle(selectedExchange.id)}
+                  >
+                    <FileText size={16} /> Exportar Controle de Trocas
                   </Button>
                 </div>
                 

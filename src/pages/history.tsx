@@ -29,7 +29,8 @@ import {
   Calendar, 
   Download,
   Image,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -41,7 +42,7 @@ import { toast } from '@/lib/toast';
 
 const History: React.FC = () => {
   const { user, isAdmin } = useAuth();
-  const { exchanges, products } = useData();
+  const { exchanges, products, exportarParaPlanilhaControle } = useData();
   
   // Filter and search state
   const [search, setSearch] = useState('');
@@ -553,146 +554,160 @@ const History: React.FC = () => {
           
           {selectedExchange && (
             <div className="space-y-6 pt-4">
-              {/* Header Info */}
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Legenda</p>
-                  <p className="font-medium">{selectedExchange.label}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Data</p>
-                  <p className="font-medium flex items-center gap-1">
-                    <Calendar size={14} /> {formatDate(selectedExchange.createdAt)}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <p>{getStatusBadge(selectedExchange.status)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Tipo</p>
-                  <p>{getTypeBadge(selectedExchange.type)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Usuário</p>
-                  <p className="font-medium">{selectedExchange.userName}</p>
-                  <p className="text-xs text-muted-foreground">{selectedExchange.userRegistration}</p>
-                </div>
-                {selectedExchange.notes && (
-                  <div className="space-y-1 md:col-span-2">
-                    <p className="text-sm text-muted-foreground">Observações</p>
-                    <p>{selectedExchange.notes}</p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Export to Excel button */}
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => exportExchangeToExcel(selectedExchange, products)}
-                >
-                  <FileSpreadsheet size={16} /> Exportar para Planilha
-                </Button>
-              </div>
-              
-              {/* Items */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Itens do Registro</h3>
-                
+              <div className="flex flex-col gap-4">
+                {/* Header Info */}
                 <div className="space-y-6">
-                  {selectedExchange.items.map((item, index) => {
-                    const product = products.find(p => p.id === item.productId);
+                  {/* Header Info */}
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Legenda</p>
+                      <p className="font-medium">{selectedExchange.label}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Data</p>
+                      <p className="font-medium flex items-center gap-1">
+                        <Calendar size={14} /> {formatDate(selectedExchange.createdAt)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Tipo</p>
+                      <p>{getTypeBadge(selectedExchange.type)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Status</p>
+                      <p>{getStatusBadge(selectedExchange.status)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Usuário</p>
+                      <p className="font-medium">{selectedExchange.userName}</p>
+                      <p className="text-xs text-muted-foreground">{selectedExchange.userRegistration}</p>
+                    </div>
+                    {selectedExchange.notes && (
+                      <div className="space-y-1 md:col-span-1">
+                        <p className="text-sm text-muted-foreground">Observações</p>
+                        <p>{selectedExchange.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Export Buttons */}
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => exportExchangeToExcel(selectedExchange, products)}
+                    >
+                      <FileSpreadsheet size={16} /> Exportar para Planilha
+                    </Button>
                     
-                    return (
-                      <Card key={item.id} className="overflow-hidden">
-                        <CardHeader className="bg-accent/50">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Package size={16} />
-                            {product?.name || 'Produto não encontrado'}
-                          </CardTitle>
-                          <CardDescription>
-                            {product?.code} - {product?.capacity}ml
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                  <p className="text-sm text-muted-foreground">Quantidade</p>
-                                  <p className="font-medium">{item.quantity} unidade(s)</p>
-                                </div>
-                              </div>
-                              
-                              <div className="space-y-1">
-                                <p className="text-sm text-muted-foreground">Motivo</p>
-                                <p>{item.reason}</p>
-                              </div>
-                              
-                              {item.photos.length > 0 && (
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-sm text-muted-foreground">Fotos</p>
-                                    <div className="flex gap-2">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="h-7 gap-1"
-                                        onClick={() => downloadAllImages(selectedExchange)}
-                                      >
-                                        <Download size={14} /> Baixar todas
-                                      </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => exportarParaPlanilhaControle(selectedExchange.id)}
+                    >
+                      <FileText size={16} /> Exportar Controle de Trocas
+                    </Button>
+                  </div>
+                  
+                  {/* Items */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Itens do Registro</h3>
+                    
+                    <div className="space-y-6">
+                      {selectedExchange.items.map((item, index) => {
+                        const product = products.find(p => p.id === item.productId);
+                        
+                        return (
+                          <Card key={item.id} className="overflow-hidden">
+                            <CardHeader className="bg-accent/50">
+                              <CardTitle className="text-base flex items-center gap-2">
+                                <Package size={16} />
+                                {product?.name || 'Produto não encontrado'}
+                              </CardTitle>
+                              <CardDescription>
+                                {product?.code} - {product?.capacity}ml
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                      <p className="text-sm text-muted-foreground">Quantidade</p>
+                                      <p className="font-medium">{item.quantity} unidade(s)</p>
                                     </div>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {item.photos.length > 0 && (
-                              <div className="grid grid-cols-2 gap-2">
-                                {item.photos.map((photo, photoIndex) => (
-                                  <div key={photoIndex} className="relative aspect-square rounded-md overflow-hidden border">
-                                    <img
-                                      src={photo}
-                                      alt={`Foto ${photoIndex + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="absolute bottom-1 right-1 bg-black/50 text-white hover:bg-black/70"
-                                      onClick={() => {
-                                        const product = products.find(p => p.id === item.productId);
-                                        const fileName = `${product?.name.replace(/\s+/g, '_').toLowerCase() || 'produto'}_${product?.capacity || 0}ml_${item.quantity}un.jpg`;
-                                        downloadImage(photo, fileName);
-                                      }}
-                                    >
-                                      <Download size={14} />
-                                    </Button>
+                                  
+                                  <div className="space-y-1">
+                                    <p className="text-sm text-muted-foreground">Motivo</p>
+                                    <p>{item.reason}</p>
                                   </div>
-                                ))}
+                                  
+                                  {item.photos.length > 0 && (
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <p className="text-sm text-muted-foreground">Fotos</p>
+                                        <div className="flex gap-2">
+                                          <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-7 gap-1"
+                                            onClick={() => downloadAllImages(selectedExchange)}
+                                          >
+                                            <Download size={14} /> Baixar todas
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {item.photos.length > 0 && (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {item.photos.map((photo, photoIndex) => (
+                                      <div key={photoIndex} className="relative aspect-square rounded-md overflow-hidden border">
+                                        <img
+                                          src={photo}
+                                          alt={`Foto ${photoIndex + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="absolute bottom-1 right-1 bg-black/50 text-white hover:bg-black/70"
+                                          onClick={() => {
+                                            const product = products.find(p => p.id === item.productId);
+                                            const fileName = `${product?.name.replace(/\s+/g, '_').toLowerCase() || 'produto'}_${product?.capacity || 0}ml_${item.quantity}un.jpg`;
+                                            downloadImage(photo, fileName);
+                                          }}
+                                        >
+                                          <Download size={14} />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Extra info for approved/rejected items */}
+                  {(selectedExchange.status === 'approved' || selectedExchange.status === 'rejected') && selectedExchange.updatedAt && (
+                    <div className="text-sm text-muted-foreground pt-2 border-t">
+                      <p>
+                        {selectedExchange.status === 'approved' ? 'Aprovado' : 'Rejeitado'} em {formatDate(selectedExchange.updatedAt)} ({formatTimeAgo(selectedExchange.updatedAt)})
+                        {selectedExchange.updatedBy && ` por ${selectedExchange.updatedBy}`}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
-              
-              {/* Extra info for approved/rejected items */}
-              {(selectedExchange.status === 'approved' || selectedExchange.status === 'rejected') && selectedExchange.updatedAt && (
-                <div className="text-sm text-muted-foreground pt-2 border-t">
-                  <p>
-                    {selectedExchange.status === 'approved' ? 'Aprovado' : 'Rejeitado'} em {formatDate(selectedExchange.updatedAt)} ({formatTimeAgo(selectedExchange.updatedAt)})
-                    {selectedExchange.updatedBy && ` por ${selectedExchange.updatedBy}`}
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>
