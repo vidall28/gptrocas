@@ -11,8 +11,18 @@ export default function Login() {
   const [isResetMode, setIsResetMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginStuck, setLoginStuck] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { login, resetPassword, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  
+  // Adicionar diagnóstico detalhado do estado atual
+  console.log("### ESTADO ATUAL DA PÁGINA DE LOGIN ###");
+  console.log("User:", user);
+  console.log("isAuthenticated:", isAuthenticated);
+  console.log("loginStuck:", loginStuck);
+  console.log("isSubmitted:", isSubmitted);
+  console.log("URL atual:", window.location.href);
+  console.log("##########################################");
   
   // Verificar se o usuário já está autenticado
   useEffect(() => {
@@ -28,14 +38,26 @@ export default function Login() {
     checkAuthStuck();
     
     // E também verificar após um tempo para dar chance de tudo ser carregado
-    const timer = setTimeout(checkAuthStuck, 3000);
+    const timer = setTimeout(checkAuthStuck, 2000);
     
     return () => clearTimeout(timer);
   }, [isAuthenticated, user]);
   
+  // Adicionar listener para verificar mudanças no localStorage para fins de diagnóstico
+  useEffect(() => {
+    const storageListener = () => {
+      console.log("Alteração no localStorage detectada");
+      console.log("Usuário autenticado após alteração:", !!user);
+    };
+    
+    window.addEventListener('storage', storageListener);
+    return () => window.removeEventListener('storage', storageListener);
+  }, [user]);
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setIsSubmitted(true);
     
     try {
       if (isResetMode) {
@@ -49,7 +71,10 @@ export default function Login() {
         
         // Em caso de falha no redirecionamento automático, ativar o estado de login travado
         setTimeout(() => {
-          setLoginStuck(true);
+          if (window.location.pathname.includes('login')) {
+            console.log("ATENÇÃO: Ainda na página de login após 5 segundos desde o login bem-sucedido");
+            setLoginStuck(true);
+          }
         }, 5000);
       }
     } catch (error) {
@@ -63,8 +88,14 @@ export default function Login() {
   const forceRedirect = () => {
     console.log("Forçando redirecionamento manual para dashboard");
     // Definir flag e redirecionar diretamente
-    localStorage.setItem('login_success', 'true');
-    window.location.href = '/dashboard';
+    try {
+      localStorage.setItem('dashboard_redirect', 'true');
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error("Erro ao redirecionar:", error);
+      // Tentativa alternativa
+      window.location.replace('/dashboard');
+    }
   };
 
   return (
@@ -74,6 +105,21 @@ export default function Login() {
         <div className="text-center">
           <h1 className="text-3xl font-bold text-primary">LogiSwap</h1>
           <p className="mt-2 text-muted-foreground">Sistema de Gestão de Trocas e Quebras</p>
+        </div>
+        
+        {/* Botão de diagnóstico sempre visível */}
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
+          <h3 className="text-amber-700 font-semibold mb-2">Problemas para entrar?</h3>
+          <p className="text-sm text-amber-600 mb-4">
+            Se você já fez login mas não foi redirecionado, use o botão abaixo:
+          </p>
+          <Button 
+            variant="outline" 
+            onClick={forceRedirect}
+            className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
+          >
+            Ir para o Dashboard Manualmente
+          </Button>
         </div>
         
         {/* Login Form */}
@@ -163,21 +209,29 @@ export default function Login() {
         
         {/* Botão alternativo de redirecionamento manual - apenas para situações de emergência */}
         {loginStuck && (
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-            <h3 className="text-amber-700 font-semibold mb-2">Problema de Redirecionamento Detectado</h3>
-            <p className="text-sm text-amber-600 mb-4">
-              O sistema detectou que você está autenticado, mas o redirecionamento automático falhou.
-              Use o botão abaixo para ir manualmente para o dashboard.
+          <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+            <h3 className="text-red-700 font-semibold mb-2">Problema de Redirecionamento Detectado!</h3>
+            <p className="text-sm text-red-600 mb-4">
+              <strong>ATENÇÃO:</strong> O sistema detectou que você está autenticado, mas o redirecionamento automático falhou.
+              Use o botão abaixo para resolver o problema:
             </p>
             <Button 
-              variant="outline" 
+              variant="destructive" 
               onClick={forceRedirect}
-              className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
+              className="w-full"
             >
-              Ir para o Dashboard Manualmente
+              ACESSAR DASHBOARD AGORA
             </Button>
           </div>
         )}
+        
+        {/* Status da Autenticação - somente para diagnóstico */}
+        <div className="text-xs text-gray-500 text-center mt-4">
+          <p>Status: {isAuthenticated ? 'Autenticado' : 'Não autenticado'}</p>
+          {isAuthenticated && user && (
+            <p>Usuário: {user.email} (ID: {user.id?.substring(0, 6)}...)</p>
+          )}
+        </div>
       </div>
     </div>
   );
