@@ -300,9 +300,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Aguardar um momento para garantir que o estado foi atualizado
           setTimeout(() => {
-            navigate('/dashboard');
-            setIsLoading(false);
-          }, 500);
+            console.log('Redirecionando para o dashboard...');
+            try {
+              navigate('/dashboard');
+              console.log('Navegação para dashboard realizada');
+            } catch (navError) {
+              console.error('Erro durante a navegação:', navError);
+            }
+          }, 1000); // Aumentado de 500ms para 1000ms
           
           return;
         } catch (fixError) {
@@ -378,8 +383,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Aguardar um momento para garantir que o estado foi atualizado
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 500);
+        console.log('Redirecionando para o dashboard...');
+        try {
+          navigate('/dashboard');
+          console.log('Navegação para dashboard realizada');
+        } catch (navError) {
+          console.error('Erro durante a navegação:', navError);
+        }
+      }, 1000); // Aumentado de 500ms para 1000ms
       
     } catch (error) {
       console.error('Erro ao fazer login:', error);
