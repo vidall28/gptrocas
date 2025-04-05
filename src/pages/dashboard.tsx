@@ -11,9 +11,24 @@ const Dashboard: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { exchanges, products } = useData();
   
-  // Verificar se o usuário chegou após um redirecionamento bem-sucedido
+  // Verificar se o usuário chegou por acesso forçado
   useEffect(() => {
-    // Verificar flag de redirecionamento
+    const forceAccessFlag = localStorage.getItem('force_access');
+    if (forceAccessFlag === 'true') {
+      // Limpar o flag
+      localStorage.removeItem('force_access');
+      
+      // Mostrar mensagem de aviso
+      console.log("AVISO: Acesso ao dashboard em modo forçado");
+      toast.warning("Acesso em modo de emergência. Algumas funcionalidades podem não estar disponíveis.");
+      
+      // Forçar recarga da página após 2 segundos para tentar recuperar dados
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
+    
+    // Verificar se o usuário chegou após um redirecionamento bem-sucedido
     const redirectFlag = localStorage.getItem('dashboard_redirect');
     if (redirectFlag === 'true') {
       // Limpar o flag

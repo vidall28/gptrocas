@@ -113,13 +113,21 @@ export default function Login() {
           <p className="text-sm text-amber-600 mb-4">
             Se você já fez login mas não foi redirecionado, use o botão abaixo:
           </p>
-          <Button 
-            variant="outline" 
-            onClick={forceRedirect}
-            className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
-          >
-            Ir para o Dashboard Manualmente
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button 
+              variant="outline" 
+              onClick={forceRedirect}
+              className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
+            >
+              Ir para o Dashboard Manualmente
+            </Button>
+            <a 
+              href="/acesso-emergencia.html" 
+              className="text-amber-700 hover:underline text-sm font-semibold text-center"
+            >
+              Acessar Ferramenta de Diagnóstico Avançado
+            </a>
+          </div>
         </div>
         
         {/* Login Form */}
