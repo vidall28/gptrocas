@@ -10,24 +10,28 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isResetMode, setIsResetMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, resetPassword, user } = useAuth();
+  const [loginStuck, setLoginStuck] = useState(false);
+  const { login, resetPassword, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Verificar se o usuário já está autenticado
   useEffect(() => {
-    if (user) {
-      console.log("Usuário já autenticado, redirecionando para dashboard...");
-      setTimeout(() => {
-        try {
-          navigate('/dashboard');
-          console.log("Navegação para dashboard realizada com sucesso");
-        } catch (error) {
-          console.error("Erro na navegação:", error);
-          window.location.href = '/dashboard';
-        }
-      }, 500);
-    }
-  }, [user, navigate]);
+    const checkAuthStuck = () => {
+      // Verificar se há usuário autenticado mas não redirecionou
+      if (isAuthenticated && user) {
+        console.log("Usuário autenticado mas ainda na página de login - possível bug de redirecionamento");
+        setLoginStuck(true);
+      }
+    };
+
+    // Verificar imediatamente
+    checkAuthStuck();
+    
+    // E também verificar após um tempo para dar chance de tudo ser carregado
+    const timer = setTimeout(checkAuthStuck, 3000);
+    
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, user]);
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +47,10 @@ export default function Login() {
         await login(email, password);
         console.log("Login realizado com sucesso, aguardando redirecionamento...");
         
-        // Redirecionamento será feito pelo useEffect quando o usuário for atualizado
+        // Em caso de falha no redirecionamento automático, ativar o estado de login travado
+        setTimeout(() => {
+          setLoginStuck(true);
+        }, 5000);
       }
     } catch (error) {
       console.error("Erro no login:", error);
@@ -51,6 +58,13 @@ export default function Login() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const forceRedirect = () => {
+    console.log("Forçando redirecionamento manual para dashboard");
+    // Definir flag e redirecionar diretamente
+    localStorage.setItem('login_success', 'true');
+    window.location.href = '/dashboard';
   };
 
   return (
@@ -147,15 +161,20 @@ export default function Login() {
           </div>
         </div>
         
-        {/* Botão alternativo de redirecionamento manual - apenas para teste */}
-        {user && (
-          <div className="text-center p-2">
+        {/* Botão alternativo de redirecionamento manual - apenas para situações de emergência */}
+        {loginStuck && (
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <h3 className="text-amber-700 font-semibold mb-2">Problema de Redirecionamento Detectado</h3>
+            <p className="text-sm text-amber-600 mb-4">
+              O sistema detectou que você está autenticado, mas o redirecionamento automático falhou.
+              Use o botão abaixo para ir manualmente para o dashboard.
+            </p>
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = '/dashboard'}
-              className="mt-4"
+              onClick={forceRedirect}
+              className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
             >
-              Redirecionamento Manual para Dashboard
+              Ir para o Dashboard Manualmente
             </Button>
           </div>
         )}
