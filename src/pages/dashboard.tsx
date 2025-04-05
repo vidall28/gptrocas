@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useData } from '@/context/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Package, History, ClipboardCheck, Users, BarChart4 } from 'lucide-react';
+import { toast } from '@/lib/toast';
 
 const Dashboard: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const { exchanges, products } = useData();
+  
+  // Verificar se o usuário chegou após um login bem-sucedido
+  useEffect(() => {
+    const loginSuccess = localStorage.getItem('login_success');
+    if (loginSuccess === 'true') {
+      // Limpar o flag
+      localStorage.removeItem('login_success');
+      
+      // Forçar recarga de dados
+      window.location.reload();
+    }
+  }, []);
   
   // Count statistics
   const pendingCount = exchanges.filter(e => e.status === 'pending').length;

@@ -187,10 +187,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`Iniciando processo de login para: ${email}`);
       
-      // Limpar qualquer resquício de sessão anterior
-      console.log('Limpando dados residuais de sessão anterior');
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
+      // Limpeza agressiva de todos os dados de sessão local
+      console.log('Limpando TODOS os dados de sessão');
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
       
       // Configuração para persistência da sessão
       const persistenceOptions = {
@@ -298,19 +303,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           toast.success('Login realizado com sucesso!');
           
-          // Aguardar um momento para garantir que o estado foi atualizado
+          // Forçar redirecionamento com recarga completa da página
+          console.log('Forçando redirecionamento para o dashboard com recarga completa...');
           setTimeout(() => {
-            console.log('Redirecionando para o dashboard...');
-            try {
-              // Redirecionar diretamente usando window.location para evitar problemas de navegação
-              window.location.href = '/dashboard';
-              console.log('Redirecionamento direto para dashboard iniciado');
-            } catch (navError) {
-              console.error('Erro durante o redirecionamento:', navError);
-              // Fallback para tentativa alternativa
-              navigate('/dashboard');
-            }
-          }, 1500); // Aumentado para 1.5 segundos
+            // Armazenar no localStorage um flag indicando login bem-sucedido
+            localStorage.setItem('login_success', 'true');
+            
+            // Redirecionamento direto com recarga completa
+            window.location.href = '/dashboard';
+          }, 2000); // Aumentado para 2 segundos para garantir que tudo está salvo
           
           return;
         } catch (fixError) {
@@ -384,19 +385,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Verificação de sessão após login:", 
                  sessionCheck?.session ? "Sessão ativa" : "Sessão não encontrada");
       
-      // Aguardar um momento para garantir que o estado foi atualizado
+      // Forçar redirecionamento com recarga completa da página
+      console.log('Forçando redirecionamento para o dashboard com recarga completa...');
       setTimeout(() => {
-        console.log('Redirecionando para o dashboard...');
-        try {
-          // Redirecionar diretamente usando window.location para evitar problemas de navegação
-          window.location.href = '/dashboard';
-          console.log('Redirecionamento direto para dashboard iniciado');
-        } catch (navError) {
-          console.error('Erro durante o redirecionamento:', navError);
-          // Fallback para tentativa alternativa
-          navigate('/dashboard');
-        }
-      }, 1500); // Aumentado para 1.5 segundos
+        // Armazenar no localStorage um flag indicando login bem-sucedido
+        localStorage.setItem('login_success', 'true');
+        
+        // Redirecionamento direto com recarga completa
+        window.location.href = '/dashboard';
+      }, 2000); // Aumentado para 2 segundos para garantir que tudo está salvo
       
     } catch (error) {
       console.error('Erro ao fazer login:', error);
