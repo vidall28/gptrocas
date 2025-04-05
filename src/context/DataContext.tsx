@@ -80,6 +80,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        // Verifique se o usuário está autenticado
+        if (!user) {
+          console.log('Não há usuário autenticado, ignorando carregamento de produtos');
+          return;
+        }
+        
+        console.log('Usuário autenticado, carregando produtos...');
         setIsLoading(true);
         const { data, error } = await supabase
           .from('products')
@@ -87,12 +94,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .order('name');
           
         if (error) {
+          console.error('Erro ao carregar produtos:', error);
           throw error;
         }
         
         if (data) {
+          console.log(`${data.length} produtos encontrados`);
           const mappedProducts = data.map(mappers.mapProductFromDB);
+          console.log('Produtos mapeados e prontos para exibição');
           setProducts(mappedProducts);
+        } else {
+          console.log('Nenhum produto encontrado');
         }
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
@@ -103,7 +115,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     fetchProducts();
-  }, []);
+  }, [user]);
 
   // Carregar exchanges do Supabase
   useEffect(() => {
