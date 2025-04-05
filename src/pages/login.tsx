@@ -10,91 +10,65 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [isResetMode, setIsResetMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginStuck, setLoginStuck] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const { login, resetPassword, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  // Adicionar diagnóstico detalhado do estado atual
-  console.log("### ESTADO ATUAL DA PÁGINA DE LOGIN ###");
-  console.log("User:", user);
-  console.log("isAuthenticated:", isAuthenticated);
-  console.log("loginStuck:", loginStuck);
-  console.log("isSubmitted:", isSubmitted);
-  console.log("URL atual:", window.location.href);
-  console.log("##########################################");
-  
   // Verificar se o usuário já está autenticado
   useEffect(() => {
-    const checkAuthStuck = () => {
-      // Verificar se há usuário autenticado mas não redirecionou
-      if (isAuthenticated && user) {
-        console.log("Usuário autenticado mas ainda na página de login - possível bug de redirecionamento");
-        setLoginStuck(true);
-      }
-    };
-
-    // Verificar imediatamente
-    checkAuthStuck();
-    
-    // E também verificar após um tempo para dar chance de tudo ser carregado
-    const timer = setTimeout(checkAuthStuck, 2000);
-    
-    return () => clearTimeout(timer);
+    if (isAuthenticated && user) {
+      console.log("Usuário já autenticado, redirecionando para o dashboard");
+      navigateToDashboard();
+    }
   }, [isAuthenticated, user]);
-  
-  // Adicionar listener para verificar mudanças no localStorage para fins de diagnóstico
-  useEffect(() => {
-    const storageListener = () => {
-      console.log("Alteração no localStorage detectada");
-      console.log("Usuário autenticado após alteração:", !!user);
-    };
-    
-    window.addEventListener('storage', storageListener);
-    return () => window.removeEventListener('storage', storageListener);
-  }, [user]);
+
+  // Função para navegação segura ao dashboard
+  const navigateToDashboard = () => {
+    try {
+      // Tentativa 1: Usar React Router para navegação SPA
+      navigate('/dashboard');
+      
+      // Tentativa 2: Em caso de falha, usar redirecionamento direto após timeout
+      setTimeout(() => {
+        if (window.location.pathname.includes('login')) {
+          console.log("Redirecionamento via Router falhou, usando window.location");
+          window.location.href = '/dashboard';
+        }
+      }, 1000);
+    } catch (error) {
+      console.error("Erro ao navegar:", error);
+      // Tentativa 3: Fallback final
+      window.location.href = '/dashboard';
+    }
+  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setIsSubmitted(true);
     
     try {
       if (isResetMode) {
         await resetPassword(email);
-        alert('Verifique seu email para as instruções de recuperação de senha.');
+        toast.success('Verifique seu email para as instruções de recuperação de senha.');
         setIsResetMode(false);
       } else {
         console.log("Iniciando processo de login...");
         await login(email, password);
-        console.log("Login realizado com sucesso, aguardando redirecionamento...");
         
-        // Em caso de falha no redirecionamento automático, ativar o estado de login travado
+        // Login bem-sucedido, aguardar breve momento para atualização de estado
         setTimeout(() => {
-          if (window.location.pathname.includes('login')) {
-            console.log("ATENÇÃO: Ainda na página de login após 5 segundos desde o login bem-sucedido");
-            setLoginStuck(true);
+          if (isAuthenticated && user) {
+            navigateToDashboard();
+          } else {
+            console.log("Estado de autenticação ainda não atualizado, tentando redirecionamento direto");
+            window.location.href = '/redirect.html';
           }
-        }, 5000);
+        }, 500);
       }
     } catch (error) {
       console.error("Erro no login:", error);
-      alert(error.message || 'Ocorreu um erro. Tente novamente.');
+      toast.error(error.message || 'Ocorreu um erro. Tente novamente.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-  
-  const forceRedirect = () => {
-    console.log("Forçando redirecionamento manual para dashboard");
-    // Definir flag e redirecionar diretamente
-    try {
-      localStorage.setItem('dashboard_redirect', 'true');
-      window.location.href = '/dashboard';
-    } catch (error) {
-      console.error("Erro ao redirecionar:", error);
-      // Tentativa alternativa
-      window.location.replace('/dashboard');
     }
   };
 
@@ -107,41 +81,19 @@ export default function Login() {
           <p className="mt-2 text-muted-foreground">Sistema de Gestão de Trocas e Quebras</p>
         </div>
         
-        {/* Botão de diagnóstico sempre visível */}
+        {/* Opções de acesso alternativo */}
         <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
-          <h3 className="text-amber-700 font-semibold mb-2">Problemas para entrar?</h3>
-          <p className="text-sm text-amber-600 mb-4">
-            Se você já fez login mas não foi redirecionado, use o botão abaixo:
-          </p>
+          <h3 className="text-amber-700 font-semibold mb-2">Opções de acesso</h3>
           <div className="flex flex-col gap-2">
-            <Button 
-              variant="outline" 
-              onClick={forceRedirect}
-              className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300"
-            >
-              Ir para o Dashboard Manualmente
-            </Button>
-            <a 
-              href="/acesso-emergencia.html" 
-              className="text-amber-700 hover:underline text-sm font-semibold text-center"
-            >
-              Acessar Ferramenta de Diagnóstico Avançado
-            </a>
-            <a 
-              href="/login-direto.html" 
-              className="bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 px-4 py-2 rounded text-center text-sm font-bold mt-2"
-            >
-              USAR PÁGINA DE LOGIN ALTERNATIVA
-            </a>
             <a 
               href="/login-simples.html" 
-              className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 px-4 py-2 rounded text-center text-sm font-bold mt-2"
+              className="bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 px-4 py-2 rounded text-center text-sm font-bold"
             >
               USAR LOGIN SIMPLIFICADO (RECOMENDADO)
             </a>
             <a 
               href="/acesso-direto.html" 
-              className="bg-red-500 hover:bg-red-600 text-white border border-red-600 px-4 py-3 rounded text-center text-sm font-bold mt-4 block animate-pulse"
+              className="bg-red-500 hover:bg-red-600 text-white border border-red-600 px-4 py-3 rounded text-center text-sm font-bold mt-2 animate-pulse"
             >
               ⚠️ ACESSO DIRETO DE EMERGÊNCIA ⚠️
             </a>
@@ -199,64 +151,23 @@ export default function Login() {
             >
               {isSubmitting 
                 ? (isResetMode ? 'Enviando...' : 'Entrando...') 
-                : (isResetMode ? 'Enviar Email de Recuperação' : 'Entrar')}
+                : (isResetMode ? 'Enviar Instruções' : 'Entrar')}
             </Button>
-          </form>
-          
-          <div className="mt-6 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-              {isResetMode ? (
-                <button 
-                  type="button" 
-                  onClick={() => setIsResetMode(false)}
-                  className="text-primary hover:underline"
-                >
-                  Voltar ao login
-                </button>
-              ) : (
-                <button 
-                  type="button" 
-                  onClick={() => setIsResetMode(true)}
-                  className="text-primary hover:underline"
-                >
-                  Esqueceu sua senha?
-                </button>
-              )}
-            </p>
             
-            <p className="text-sm text-muted-foreground">
-              Não possui uma conta?{' '}
-              <Link to="/register" className="text-primary hover:underline">
-                Registrar
+            <div className="flex justify-between items-center mt-4">
+              <button
+                type="button"
+                onClick={() => setIsResetMode(!isResetMode)}
+                className="text-sm text-primary hover:underline"
+              >
+                {isResetMode ? 'Voltar ao login' : 'Esqueceu a senha?'}
+              </button>
+              
+              <Link to="/register" className="text-sm text-primary hover:underline">
+                Criar nova conta
               </Link>
-            </p>
-          </div>
-        </div>
-        
-        {/* Botão alternativo de redirecionamento manual - apenas para situações de emergência */}
-        {loginStuck && (
-          <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-            <h3 className="text-red-700 font-semibold mb-2">Problema de Redirecionamento Detectado!</h3>
-            <p className="text-sm text-red-600 mb-4">
-              <strong>ATENÇÃO:</strong> O sistema detectou que você está autenticado, mas o redirecionamento automático falhou.
-              Use o botão abaixo para resolver o problema:
-            </p>
-            <Button 
-              variant="destructive" 
-              onClick={forceRedirect}
-              className="w-full"
-            >
-              ACESSAR DASHBOARD AGORA
-            </Button>
-          </div>
-        )}
-        
-        {/* Status da Autenticação - somente para diagnóstico */}
-        <div className="text-xs text-gray-500 text-center mt-4">
-          <p>Status: {isAuthenticated ? 'Autenticado' : 'Não autenticado'}</p>
-          {isAuthenticated && user && (
-            <p>Usuário: {user.email} (ID: {user.id?.substring(0, 6)}...)</p>
-          )}
+            </div>
+          </form>
         </div>
       </div>
     </div>
