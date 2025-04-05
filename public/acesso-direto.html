@@ -98,6 +98,19 @@
         <button id="accessButton" class="button danger">ACESSAR DASHBOARD AGORA</button>
         <button id="clearButton" class="button">LIMPAR TODOS OS DADOS DE SESSÃO</button>
         
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h3 style="color: #444; margin-bottom: 15px;">Acesso Direto a Rotas Específicas</h3>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                Se o redirecionamento para o dashboard não funcionar, tente acessar diretamente uma destas páginas:
+            </p>
+            
+            <button id="routeHome" class="button primary" data-route="/">Página Inicial</button>
+            <button id="routeProducts" class="button primary" data-route="/products">Produtos</button>
+            <button id="routeHistory" class="button primary" data-route="/history">Histórico</button>
+            <button id="routeApprovals" class="button primary" data-route="/approvals">Aprovações</button>
+            <button id="routeRecord" class="button primary" data-route="/record">Registrar Troca</button>
+        </div>
+        
         <div id="log" class="log"></div>
     </div>
     
@@ -141,13 +154,56 @@
             
             // Timeout para dar tempo de ver os logs
             setTimeout(function() {
-                window.location.href = '/dashboard';
+                try {
+                    // Tentar com URL absoluta
+                    const baseUrl = window.location.origin;
+                    log(`Redirecionando para ${baseUrl}/dashboard com URL absoluta`);
+                    window.location.href = `${baseUrl}/dashboard`;
+                    
+                    // Alternativa: configurar um segundo timeout como backup
+                    setTimeout(function() {
+                        log('Verificando se o redirecionamento foi bem-sucedido...');
+                        if (window.location.pathname.includes('login')) {
+                            log('Redirecionamento falhou! Tentando abordagem alternativa...');
+                            // Criar e disparar um evento personalizado para forçar a navegação
+                            const navigationEvent = new CustomEvent('forceNavigation', {
+                                detail: { destination: '/dashboard' }
+                            });
+                            window.dispatchEvent(navigationEvent);
+                            
+                            // Última tentativa: substituição completa da URL
+                            window.location.replace(`${baseUrl}/dashboard`);
+                        }
+                    }, 1000);
+                } catch (error) {
+                    log(`Erro no redirecionamento: ${error}`);
+                    // Tentativa de fallback
+                    window.location.replace('/dashboard');
+                }
             }, 2000);
         }
         
         // Configurar eventos
         accessButton.addEventListener('click', accessDashboard);
         clearButton.addEventListener('click', clearLocalStorage);
+        
+        // Adicionar manipuladores para botões de rota
+        document.querySelectorAll('[data-route]').forEach(button => {
+            button.addEventListener('click', function() {
+                const route = this.getAttribute('data-route');
+                const baseUrl = window.location.origin;
+                const fullUrl = `${baseUrl}${route}`;
+                
+                log(`Acessando rota direta: ${route}`);
+                
+                // Configurar flags de acesso
+                localStorage.setItem('force_access', 'true');
+                localStorage.setItem('direct_access_timestamp', Date.now().toString());
+                
+                // Redirecionar para a rota
+                window.location.href = fullUrl;
+            });
+        });
         
         // Mensagem inicial
         document.addEventListener('DOMContentLoaded', function() {

@@ -153,7 +153,7 @@ const Approvals: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      console.log(`Aprovando troca ID: ${selectedExchange.id}`);
+      console.log(`[INFO] Iniciando aprovação da troca ID: ${selectedExchange.id}`);
       
       // Fecha o diálogo imediatamente para melhor UX
       setReviewOpen(false);
@@ -161,29 +161,29 @@ const Approvals: React.FC = () => {
       // Atualiza o status usando a nova interface da função com parâmetros tipados corretamente
       await updateExchange(
         selectedExchange.id, 
-        'approved' as 'pending' | 'approved' | 'rejected', 
-        approvalNotes
+        'approved',
+        approvalNotes,
+        user?.id // Passa o ID do usuário atual como quem aprovou
       );
       
       // Feedback ao usuário
       toast.success('Registro aprovado com sucesso!');
     } catch (error) {
-      console.error('Erro ao aprovar troca:', error);
+      console.error('[ERROR] Erro ao aprovar troca:', error);
       
       // Mostra erro se houver falha
       toast.error('Erro ao aprovar registro. Consulte o log para mais detalhes.');
+      
+      // Reabre o diálogo se houve erro
+      setReviewOpen(true);
     } finally {
       // Limpa os campos e estados
       setIsProcessing(false);
-      setApprovalNotes('');
     }
   };
   
   // Reject exchange
   const rejectExchange = async () => {
-    // NOTA IMPORTANTE: Tanto a aprovação quanto a rejeição compartilham o mesmo campo de texto (approvalNotes).
-    // Originalmente havia dois campos separados, mas o formulário só exibe um, causando problemas quando
-    // tentava-se rejeitar uma troca (verificava rejectionNotes que não era preenchido pelo usuário).
     if (!selectedExchange) return;
     
     // Verifica se há notas para rejeição
@@ -196,7 +196,7 @@ const Approvals: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      console.log(`Rejeitando troca ID: ${selectedExchange.id}, Motivo: ${approvalNotes}`);
+      console.log(`[INFO] Iniciando rejeição da troca ID: ${selectedExchange.id}, Motivo: ${approvalNotes}`);
       
       // Fecha o diálogo imediatamente para melhor UX
       setReviewOpen(false);
@@ -204,21 +204,24 @@ const Approvals: React.FC = () => {
       // Atualiza o status usando a nova interface da função com parâmetros tipados corretamente
       await updateExchange(
         selectedExchange.id, 
-        'rejected' as 'pending' | 'approved' | 'rejected', 
-        approvalNotes
+        'rejected',
+        approvalNotes,
+        user?.id // Passa o ID do usuário atual como quem rejeitou
       );
       
       // Feedback ao usuário
       toast.success('Registro rejeitado com sucesso!');
     } catch (error) {
-      console.error('Erro ao rejeitar troca:', error);
+      console.error('[ERROR] Erro ao rejeitar troca:', error);
       
       // Mostra erro se houver falha
       toast.error('Erro ao rejeitar registro. Consulte o log para mais detalhes.');
+      
+      // Reabre o diálogo se houve erro
+      setReviewOpen(true);
     } finally {
       // Limpa os campos e estados
       setIsProcessing(false);
-      setApprovalNotes('');
     }
   };
   

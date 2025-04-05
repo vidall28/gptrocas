@@ -830,19 +830,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               ...exchange,
               status: status,
               notes: notes || exchange.notes,
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date().toISOString(),
+              updatedBy: updatedBy || user?.id || exchange.updatedBy
             };
           }
           return exchange;
         });
       });
 
-      // Simplificamos os dados enviados para evitar problemas de tipo
+      // Usar o ID do usuário atual se não for fornecido um ID específico
+      const effectiveUpdatedBy = updatedBy || user?.id;
+      
+      // Dados para atualização com ID do usuário que fez a atualização
       const updateData = {
         status: status,
         notes: notes || null,
-        updated_at: new Date().toISOString()
-        // Deliberadamente NÃO incluímos updated_by para evitar problemas de tipo
+        updated_at: new Date().toISOString(),
+        updated_by: effectiveUpdatedBy
       };
 
       console.log(`[DEBUG] Dados para atualização:`, updateData);
@@ -854,7 +858,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', id);
 
       if (error) {
-        console.error(`[ERROR] Falha ao atualizar via API: ${error.message}`);
+        console.error(`[ERROR] Falha ao atualizar via API: ${error.message}`, error);
         
         // Estratégia alternativa: Tentativa direta via SQL (evita algumas restrições)
         console.log(`[DEBUG] Tentando atualização alternativa via SQL para troca ID: ${id}`);
@@ -865,22 +869,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error: sqlError } = await supabase.rpc('update_exchange_status', {
           exchange_id: id,
           new_status: status,
-          exchange_notes: notes || null
+          exchange_notes: notes || null,
+          user_id: effectiveUpdatedBy
         });
 
         if (sqlError) {
-          console.error(`[ERROR] Falha também na estratégia SQL: ${sqlError.message}`);
+          console.error(`[ERROR] Falha também na estratégia SQL: ${sqlError.message}`, sqlError);
           
           // Terceira tentativa: SQL direto sem função RPC
           console.log(`[DEBUG] Tentativa final com SQL direto para troca ID: ${id}`);
           const { error: directSqlError } = await supabase.rpc('emergency_update_exchange', {
             p_id: id,
             p_status: status,
-            p_notes: notes || null
+            p_notes: notes || null,
+            p_updated_by: effectiveUpdatedBy
           });
 
           if (directSqlError) {
-            console.error(`[ERROR] Todas as tentativas falharam: ${directSqlError.message}`);
+            console.error(`[ERROR] Todas as tentativas falharam: ${directSqlError.message}`, directSqlError);
             throw new Error(`Falha ao atualizar troca após múltiplas tentativas: ${directSqlError.message}`);
           }
         }
@@ -888,16 +894,38 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log(`[DEBUG] Atualização concluída com sucesso para troca ID: ${id}`);
       
-      // Mantemos o atraso antes de buscar os dados para garantir consistência
+      // Busca imediata para confirmar a atualização no banco de dados
+      try {
+        const { data: confirmationData, error: confirmationError } = await supabase
+          .from('exchanges')
+          .select('status, updated_at, updated_by')
+          .eq('id', id)
+          .single();
+        
+        if (confirmationError) {
+          console.warn(`[WARNING] Não foi possível confirmar a atualização: ${confirmationError.message}`);
+        } else {
+          console.log(`[INFO] Confirmação da atualização:`, confirmationData);
+          if (confirmationData.status !== status) {
+            console.warn(`[WARNING] O status não foi atualizado corretamente no banco de dados!`);
+            console.warn(`[WARNING] Esperado: ${status}, Atual: ${confirmationData.status}`);
+          } else {
+            console.log(`[SUCCESS] Status atualizado corretamente para: ${status}`);
+          }
+        }
+      } catch (confirmError) {
+        console.warn(`[WARNING] Erro ao verificar a confirmação: ${confirmError}`);
+      }
+      
+      // Atualiza os dados após um pequeno delay para garantir consistência
       setTimeout(() => {
         fetchExchangeAndUpdateState(id).catch(err => 
           console.error(`[ERROR] Falha ao atualizar dados da troca: ${err.message}`)
         );
-      }, 500);
+      }, 800);
     } catch (error: any) {
       console.error(`[ERROR] Erro crítico ao atualizar troca: ${error.message}`);
-      // NÃO revertemos o estado local - isso pode causar confusão para o usuário
-      // já que ele viu a mensagem de sucesso
+      toast.error(`Erro ao atualizar status: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
