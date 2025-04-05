@@ -1,45 +1,57 @@
-import React, { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from '@/lib/toast';
 
-const Login: React.FC = () => {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated, resetPassword } = useAuth();
   const [isResetMode, setIsResetMode] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || (!isResetMode && !password)) {
-      toast.error('Preencha todos os campos');
-      return;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, resetPassword, user } = useAuth();
+  const navigate = useNavigate();
+  
+  // Verificar se o usuário já está autenticado
+  useEffect(() => {
+    if (user) {
+      console.log("Usuário já autenticado, redirecionando para dashboard...");
+      setTimeout(() => {
+        try {
+          navigate('/dashboard');
+          console.log("Navegação para dashboard realizada com sucesso");
+        } catch (error) {
+          console.error("Erro na navegação:", error);
+          window.location.href = '/dashboard';
+        }
+      }, 500);
     }
-    
+  }, [user, navigate]);
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setIsSubmitting(true);
     
     try {
       if (isResetMode) {
         await resetPassword(email);
+        alert('Verifique seu email para as instruções de recuperação de senha.');
         setIsResetMode(false);
       } else {
+        console.log("Iniciando processo de login...");
         await login(email, password);
+        console.log("Login realizado com sucesso, aguardando redirecionamento...");
+        
+        // Redirecionamento será feito pelo useEffect quando o usuário for atualizado
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Erro no login:", error);
+      alert(error.message || 'Ocorreu um erro. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  // Redirect if already authenticated
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" />;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -134,9 +146,20 @@ const Login: React.FC = () => {
             </p>
           </div>
         </div>
+        
+        {/* Botão alternativo de redirecionamento manual - apenas para teste */}
+        {user && (
+          <div className="text-center p-2">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/dashboard'}
+              className="mt-4"
+            >
+              Redirecionamento Manual para Dashboard
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default Login;
+}
