@@ -185,7 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-<<<<<<< HEAD
       console.log(`Iniciando processo de login para: ${email}`);
       
       // Limpar qualquer resquício de sessão anterior
@@ -198,8 +197,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         persistSession: true
       };
       
-=======
->>>>>>> 5fa848c62f66f74f780b5eeb33400014b2b4cc6a
       // Fazer login diretamente com o Supabase Auth usando email
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email,
